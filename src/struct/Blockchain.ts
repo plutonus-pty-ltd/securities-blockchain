@@ -1,5 +1,13 @@
+import fs from "fs";
+import path from "path";
+import Crypto from "crypto";
 import { BlockGenerator, isBlockEntry } from "./BlockGenerator";
 import type { BlockEntry } from "./BlockGenerator";
+
+const keyPair = {
+	public: fs.readFileSync(path.join(__dirname, "../keys/publickey.pem")),
+	private: fs.readFileSync(path.join(__dirname, "../keys/privatekey.pem"))
+}
 
 declare type IBlockchain = {
 	BlockchainCache: BlockEntry[];
@@ -12,7 +20,7 @@ export class Blockchain implements IBlockchain {
 	public readonly BlockchainCache: BlockEntry[] = [];
 
 	constructor() {
-		const genesisBlock = new BlockGenerator({ data: "Genesis Block" });
+		const genesisBlock = new BlockGenerator({ data: keyPair.public.toString() || "Genesis Block" }, false);
 		if(!isBlockEntry(genesisBlock) || typeof genesisBlock === "boolean") throw new Error("Failed to initialize genesis block!");
 		this.BlockchainCache = [
 			this.generateEntry(genesisBlock)
@@ -35,6 +43,7 @@ export class Blockchain implements IBlockchain {
 		return blockData;
 	}
 
+	// TODO: move this method to ../lib/validator.js
 	validate() {
 		console.log("\nChecking block validity...");
 		for(let i = 0; i < this.BlockchainCache.length; i++) {

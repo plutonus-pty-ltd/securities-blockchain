@@ -1,11 +1,20 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Blockchain = void 0;
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const BlockGenerator_1 = require("./BlockGenerator");
+const keyPair = {
+    public: fs_1.default.readFileSync(path_1.default.join(__dirname, "../keys/publickey.pem")),
+    private: fs_1.default.readFileSync(path_1.default.join(__dirname, "../keys/privatekey.pem"))
+};
 class Blockchain {
     constructor() {
         this.BlockchainCache = [];
-        const genesisBlock = new BlockGenerator_1.BlockGenerator({ data: "Genesis Block" });
+        const genesisBlock = new BlockGenerator_1.BlockGenerator({ data: keyPair.public.toString() || "Genesis Block" }, false);
         if (!(0, BlockGenerator_1.isBlockEntry)(genesisBlock) || typeof genesisBlock === "boolean")
             throw new Error("Failed to initialize genesis block!");
         this.BlockchainCache = [
@@ -26,6 +35,7 @@ class Blockchain {
         this.BlockchainCache.push(blockData);
         return blockData;
     }
+    // TODO: move this method to ../lib/validator.js
     validate() {
         console.log("\nChecking block validity...");
         for (let i = 0; i < this.BlockchainCache.length; i++) {

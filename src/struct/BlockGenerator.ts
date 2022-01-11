@@ -1,4 +1,12 @@
+require("dotenv").config();
+import fs from "fs";
+import path from "path";
 import * as Crypto from "crypto";
+
+const keyPair = {
+	public: fs.readFileSync(path.join(__dirname, "../keys/publickey.pem")).toString("ascii"),
+	private: fs.readFileSync(path.join(__dirname, "../keys/privatekey.pem")).toString("ascii")
+}
 
 export type BlockData = {
 	opCode: string;
@@ -12,9 +20,11 @@ export type BlockEntry = {
 	previousHash: string | null;
 	data: BlockData | string;
 	meta: {
+		encrypted: boolean;
 		nonce: string;
 		invalid?: boolean;
-		timestamp: number
+		timestamp: number;
+		signature: string | null;
 	}
 	computeHash: () => Crypto.Hash;
 }
@@ -31,22 +41,43 @@ export class BlockGenerator implements BlockEntry {
 		recipient: string;
 	};
 	public meta: {
+		encrypted: boolean;
 		nonce: string;
 		invalid: boolean;
 		timestamp: number;
+		signature: string | null;
 	};
 
-	constructor({ previousHash, data }: { previousHash?: string | null, data: string | BlockData }) {
+	constructor({ previousHash, data }: { previousHash?: string | null, data: string | BlockData }, encrypt: boolean = true) {
 		if(!data) throw new Error("Data not provided.");
 
 		this.meta = {
+			encrypted: encrypt,
 			nonce: Crypto.randomBytes(16).toString("hex").slice(0, 32),
 			invalid: false,
-			timestamp: Date.now()
+			timestamp: Date.now(),
+			signature: null
 		};
 		this.hash = this.computeHash().digest("hex");
 
+		let tempData;
 		this.data = data;
+		if(encrypt) tempData = Crypto.publicEncrypt(
+			{
+				key: keyPair.public,
+				padding: Crypto.constants.RSA_PKCS1_OAEP_PADDING,
+				oaepHash: "sha256"
+			},
+			Buffer.from(this.data.toString())
+		);
+		const signature = Crypto.createSign("RSA-SHA256").update(tempData || this.data.toString()).sign({
+			key: keyPair.private,
+			passphrase: process.env.SECRETKEY_PASSPHRASE
+		}, "base64");
+
+		this.meta.signature = signature || null;
+
+		if(encrypt) this.data = tempData?.toString("base64") || Buffer.from(data.toString(), "ascii").toString("base64");
 		this.previousHash = previousHash || null;
 		this.hash = this.computeHash().digest("hex");
 
