@@ -24,7 +24,19 @@ router.get("/:hash", async (req: Request, res: Response) => {
 		message: `Block not found: ${req.params.hash}`
 	});
 
-	return res.json(entry);
+	const meta = JSON.parse(entry.meta);
+	return res.json({
+		hash: entry.hash,
+		previousHash: entry.previousHash,
+		data: entry.data.toString().replace(/["]+/g, ""),
+		meta: {
+			encrypted: meta.encrypted,
+			nonce: meta.nonce,
+			invalid: meta.invalid,
+			timestamp: meta.timestamp,
+			signature: meta.signature
+		}
+	});
 });
 
 export default {
