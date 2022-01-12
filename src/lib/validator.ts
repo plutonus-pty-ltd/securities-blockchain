@@ -14,8 +14,6 @@ export function validateBlock(blockData: BlockEntry): { valid: boolean, error?: 
 	if(!blockData.meta.timestamp) return { valid: false, error: "timestamp:missing" }
 	if(!blockData.meta.nonce) return { valid: false, error: "nonce:missing" }
 
-	console.log(String.raw({raw:blockData.data.toString()}) == JSON.stringify(keyPair.public.toString()).replace(/["]+/g, ""));
-
 	if(!blockData.hash) return { valid: false, error: "hash:missing" }
 	if(!blockData.previousHash && String.raw({raw:blockData.data.toString()}) != JSON.stringify(keyPair.public.toString()).replace(/["]+/g, "")) return { valid: false, error: "previousHash:missing" } // edge case: genesis block
 	if(!blockData.data) return { valid: false, error: "data:missing" }
