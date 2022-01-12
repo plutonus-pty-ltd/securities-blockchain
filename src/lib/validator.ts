@@ -14,8 +14,10 @@ export function validateBlock(blockData: BlockEntry): { valid: boolean, error?: 
 	if(!blockData.meta.timestamp) return { valid: false, error: "timestamp:missing" }
 	if(!blockData.meta.nonce) return { valid: false, error: "nonce:missing" }
 
+	console.log(String.raw({raw:blockData.data.toString()}) == JSON.stringify(keyPair.public.toString()).replace(/["]+/g, ""));
+
 	if(!blockData.hash) return { valid: false, error: "hash:missing" }
-	if(!blockData.previousHash && blockData.data.toString() !== keyPair.public) return { valid: false, error: "previousHash:missing" } // edge case: genesis block
+	if(!blockData.previousHash && String.raw({raw:blockData.data.toString()}) != JSON.stringify(keyPair.public.toString()).replace(/["]+/g, "")) return { valid: false, error: "previousHash:missing" } // edge case: genesis block
 	if(!blockData.data) return { valid: false, error: "data:missing" }
 
 	const signatureValid = Crypto.createVerify("RSA-SHA256").update(blockData.data.toString(), blockData.meta.encrypted ? "base64" : "ascii").verify(Buffer.from(keyPair.public, "ascii"), Buffer.from(blockData.meta.signature || "", "base64"));

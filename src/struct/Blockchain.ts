@@ -45,7 +45,7 @@ export class Blockchain extends EventEmitter implements IBlockchain {
 					return {
 						hash: block.hash,
 						previousHash: block.previousHash,
-						data: block.data,
+						data: `${block.data.toString().replace(/["]+/g, "").replace(`/${`\u{5c}\u{5c}`}/g`, `${"\\"}`)}`,
 						meta: {
 							encrypted: meta.encrypted,
 							nonce: meta.nonce,

@@ -61,7 +61,7 @@ export class BlockGenerator implements BlockEntry {
 		this.hash = this.computeHash().digest("hex");
 
 		let tempData;
-		this.data = data;
+		this.data = JSON.stringify(data.toString()).replace(/["]+/g, "");
 		if(encrypt) tempData = Crypto.publicEncrypt(
 			{
 				key: keyPair.public,
@@ -70,7 +70,7 @@ export class BlockGenerator implements BlockEntry {
 			},
 			Buffer.from(this.data.toString())
 		);
-		const signature = Crypto.createSign("RSA-SHA256").update(tempData || this.data.toString()).sign({
+		const signature = Crypto.createSign("RSA-SHA256").update(tempData || this.data).sign({
 			key: keyPair.private,
 			passphrase: process.env.SECRETKEY_PASSPHRASE
 		}, "base64");
